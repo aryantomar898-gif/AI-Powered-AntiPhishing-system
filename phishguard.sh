@@ -8,7 +8,7 @@
 #  ╚═╝     ╚═╝  ╚═╝╚═╝╚══════╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝
 #
 #  PhishGuard v2.0 - AI-Powered Anti-Phishing & Threat Detection
-#  Open Source | MIT License | https://github.com/phishguard/phishguard
+#  Open Source | MIT License | https://github.com/aryantomar898-gif/AI-Powered-AntiPhishing-system
 # ============================================================
 
 set -euo pipefail
