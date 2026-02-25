@@ -1,0 +1,82 @@
+{
+  "version": "2.0.0",
+  "updated": "2024-01-01",
+  "phishing_domains": [
+    "paypa1.com",
+    "amazon-security.xyz",
+    "microsoft-verify.net",
+    "apple-id-support.com",
+    "secure-banking-alert.com",
+    "login-verify-now.com",
+    "account-suspended-verify.com",
+    "update-your-account.net",
+    "signin-security.com",
+    "bankofamerica-alert.com",
+    "irs-gov-refund.com",
+    "covid-relief-payment.com",
+    "netflix-billing-update.com",
+    "verify-your-paypal.com",
+    "google-account-support.xyz",
+    "facebook-security-verify.com",
+    "chase-banking-alert.net",
+    "wellsfargo-secure-login.xyz",
+    "apple-id-locked.com",
+    "microsoft-support-now.net"
+  ],
+  "suspicious_tlds": [
+    ".xyz", ".tk", ".ml", ".ga", ".cf", ".gq",
+    ".pw", ".top", ".click", ".loan", ".win", ".stream",
+    ".download", ".racing", ".cricket", ".date", ".review"
+  ],
+  "phishing_keywords": [
+    "verify your account",
+    "your account has been suspended",
+    "confirm your identity",
+    "unusual activity detected",
+    "click here immediately",
+    "act now or lose access",
+    "your password expires",
+    "congratulations you won",
+    "update payment info",
+    "security alert",
+    "limited time offer",
+    "verify now",
+    "account locked",
+    "suspicious login",
+    "free gift card",
+    "wire transfer request",
+    "urgent action required"
+  ],
+  "malicious_ip_ranges": [
+    "185.220.101.0/24",
+    "45.142.212.0/24",
+    "194.165.16.0/24",
+    "91.108.4.0/22",
+    "185.130.44.0/24"
+  ],
+  "suspicious_ports": [
+    1080, 3128, 8080, 8888, 9050, 4444,
+    5555, 6666, 7777, 9001, 1337, 31337, 4545, 6776
+  ],
+  "c2_indicators": [
+    "beacon", "heartbeat", "checkin", "cmd_exec",
+    "shell_upload", "reverse_shell", "rat_connect",
+    "dropper", "payload_deliver", "exfil"
+  ],
+  "suspicious_process_patterns": [
+    "xmrig", "minerd", "cpuminer", "coinhive",
+    "ncat -e", "nc -e", "bash -i >& /dev/tcp",
+    "python -c 'import socket",
+    "perl -e 'use Socket",
+    "wget -q -O- | bash",
+    "curl -s | bash",
+    "base64 -d | bash",
+    "mkfifo /tmp/",
+    "/dev/tcp/"
+  ],
+  "trusted_ca_list": [
+    "DigiCert", "Comodo", "GlobalSign", "Sectigo",
+    "GoDaddy", "Entrust", "Thawte", "VeriSign",
+    "QuoVadis", "IdenTrust"
+  ]
+}

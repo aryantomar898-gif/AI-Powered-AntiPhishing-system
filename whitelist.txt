@@ -1,0 +1,66 @@
+# PhishGuard Trusted Domain Whitelist
+# Lines starting with # are comments
+# Add one domain per line (no wildcards needed — subdomains auto-matched)
+
+# Search Engines
+google.com
+bing.com
+yahoo.com
+duckduckgo.com
+
+# Microsoft
+microsoft.com
+windows.com
+office.com
+live.com
+outlook.com
+azure.com
+microsoftonline.com
+
+# Apple
+apple.com
+icloud.com
+
+# Amazon / AWS
+amazon.com
+amazonaws.com
+aws.amazon.com
+
+# Social
+facebook.com
+instagram.com
+twitter.com
+linkedin.com
+
+# Developer
+github.com
+gitlab.com
+stackoverflow.com
+npmjs.com
+pypi.org
+
+# CDN / Infra
+cloudflare.com
+akamai.com
+fastly.com
+cdnjs.cloudflare.com
+
+# Security / Vendors
+virustotal.com
+shodan.io
+nvd.nist.gov
+
+# Finance (legit)
+paypal.com
+stripe.com
+square.com
+
+# Comms
+slack.com
+zoom.us
+teams.microsoft.com
+
+# Package managers
+debian.org
+ubuntu.com
+centos.org

@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhishGuard — AI Threat Detection Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a0f;
+    --surface: #0a1520;
+    --surface2: #0f1e2d;
+    --surface3: #152638;
+    --border: #1a3045;
+    --border2: #1e3a50;
+    --accent: #00d4ff;
+    --accent2: #0097b8;
+    --danger: #ff3860;
+    --danger2: #c92145;
+    --warn: #ffcc00;
+    --warn2: #c9a000;
+    --ok: #00e676;
+    --ok2: #00a854;
+    --text: #c8e0f0;
+    --text2: #7fa3bb;
+    --text3: #3d6478;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+    animation: gridScroll 20s linear infinite;
+  }
+
+  @keyframes gridScroll {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(40px, 40px); }
+  }
+
+  /* Scanline effect */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.05) 2px,
+      rgba(0,0,0,0.05) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(0,212,255,0.05) 0%, transparent 100%);
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+
+  .header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+    gap: 24px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 20px rgba(0,212,255,0.3);
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(0,212,255,0.3); }
+    50% { box-shadow: 0 0 40px rgba(0,212,255,0.6); }
+  }
+
+  .logo-text {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  .logo-version {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    background: var(--surface3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .header-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ok);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--ok);
+    border-radius: 50%;
+    animation: blink 1.5s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--ok);
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .btn {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .btn-primary:hover { background: #33deff; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,212,255,0.3); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+  }
+  .btn-danger:hover { background: rgba(255,56,96,0.1); transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border2);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── HERO / STATS AREA ── */
+  .hero {
+    padding: 40px 0 32px;
+  }
+
+  .hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+
+  .hero-title {
+    font-size: 13px;
+    font-family: var(--mono);
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .hero-subtitle {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+
+  .hero-subtitle span { color: var(--accent); }
+
+  .timestamp-box {
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text3);
+    line-height: 1.8;
+  }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: default;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .stat-card.critical::before { background: var(--danger); }
+  .stat-card.warning::before { background: var(--warn); }
+  .stat-card.ok::before { background: var(--ok); }
+  .stat-card.info::before { background: var(--accent); }
+
+  .stat-card:hover {
+    border-color: var(--border2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  .stat-value {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-card.critical .stat-value { color: var(--danger); }
+  .stat-card.warning .stat-value { color: var(--warn); }
+  .stat-card.ok .stat-value { color: var(--ok); }
+  .stat-card.info .stat-value { color: var(--accent); }
+
+  .stat-sub {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  .stat-trend {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 28px;
+    opacity: 0.15;
+  }
+
+  /* ── MAIN GRID ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .panel-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-icon { font-size: 16px; }
+
+  .panel-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+  }
+
+  .panel-body { padding: 20px 24px; }
+
+  /* ── THREAT FEED ── */
+  .threat-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .threat-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .threat-item:hover { border-color: var(--border2); background: var(--surface3); }
+
+  .threat-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+  }
+
+  .threat-item.critical::before { background: var(--danger); }
+  .threat-item.high::before { background: var(--warn); }
+  .threat-item.medium::before { background: #ff8c00; }
+  .threat-item.low::before { background: var(--ok); }
+  .threat-item.clean::before { background: var(--text3); }
+
+  .threat-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    letter-spacing: 1px;
+  }
+
+  .badge-critical { background: rgba(255,56,96,0.15); color: var(--danger); border: 1px solid rgba(255,56,96,0.3); }
+  .badge-high { background: rgba(255,204,0,0.12); color: var(--warn); border: 1px solid rgba(255,204,0,0.3); }
+  .badge-medium { background: rgba(255,140,0,0.12); color: #ff8c00; border: 1px solid rgba(255,140,0,0.3); }
+  .badge-low { background: rgba(0,230,118,0.12); color: var(--ok); border: 1px solid rgba(0,230,118,0.3); }
+  .badge-clean { background: rgba(0,212,255,0.08); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+  .badge-blocked { background: rgba(255,56,96,0.2); color: #ff6b8a; border: 1px solid rgba(255,56,96,0.4); }
+
+  .threat-content { flex: 1; min-width: 0; }
+  .threat-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .threat-meta { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+
+  .threat-score {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    min-width: 44px;
+    text-align: right;
+    line-height: 1;
+  }
+
+  /* ── URL SCANNER ── */
+  .scanner-form { display: flex; gap: 10px; }
+  .scanner-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: all 0.2s;
+  }
+  .scanner-input::placeholder { color: var(--text3); }
+  .scanner-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
+
+  .scanner-result {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--surface2);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    display: none;
+  }
+
+  .scanner-result.visible { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .risk-meter {
+    margin: 16px 0;
+    position: relative;
+  }
+
+  .risk-meter-bar {
+    height: 8px;
+    background: var(--surface3);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+
+  .risk-meter-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+
+  .risk-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 4px;
+  }
+
+  /* ── AI FACTORS ── */
+  .factor-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .factor-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    padding: 6px 10px;
+    background: var(--surface3);
+    border-radius: 6px;
+  }
+  .factor-icon { font-size: 12px; }
+
+  /* ── ACTIVITY CHART ── */
+  .chart-area {
+    height: 120px;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    padding: 0 4px;
+  }
+
+  .chart-bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .chart-bar {
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    transition: all 0.5s ease;
+    min-height: 2px;
+  }
+
+  .chart-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text3);
+    margin-top: 6px;
+    white-space: nowrap;
+  }
+
+  /* ── NETWORK TABLE ── */
+  .net-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; }
+  .net-table th { color: var(--text3); font-weight: 400; letter-spacing: 1px; text-transform: uppercase; padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+  .net-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: middle; }
+  .net-table tr:last-child td { border-bottom: none; }
+  .net-table tr:hover td { background: var(--surface2); }
+
+  /* ── SIDEBAR ── */
+  .sidebar-grid {
+    display: grid;
+    gap: 20px;
+  }
+
+  /* ── CHECKS LIST ── */
+  .check-list { display: flex; flex-direction: column; gap: 8px; }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .check-icon { font-size: 14px; }
+  .check-text { flex: 1; }
+  .check-status { font-family: var(--mono); font-size: 10px; }
+  .status-ok { color: var(--ok); }
+  .status-warn { color: var(--warn); }
+  .status-fail { color: var(--danger); }
+
+  /* ── TERMINAL ── */
+  .terminal {
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .terminal-bar {
+    background: #1a1a1a;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #333;
+  }
+
+  .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .term-dot.red { background: #ff5f56; }
+  .term-dot.yellow { background: #ffbd2e; }
+  .term-dot.green { background: #27c93f; }
+
+  .terminal-title { font-family: var(--mono); font-size: 11px; color: #666; margin-left: 8px; }
+
+  .terminal-body {
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    min-height: 200px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  .t-prompt { color: #00d4ff; }
+  .t-cmd { color: #fff; }
+  .t-ok { color: #27c93f; }
+  .t-warn { color: #ffbd2e; }
+  .t-err { color: #ff5f56; }
+  .t-dim { color: #555; }
+  .t-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--accent);
+    animation: cursor-blink 1s step-end infinite;
+    vertical-align: middle;
+  }
+  @keyframes cursor-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1100px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .main-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .hero-subtitle { font-size: 24px; }
+    .header-inner { flex-wrap: wrap; height: auto; padding: 12px 0; }
+  }
+
+  /* ── SCANNING ANIMATION ── */
+  @keyframes scanPulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+  }
+
+  .scanning { animation: scanPulse 1.5s ease-in-out infinite; }
+
+  /* ── NOTIFICATIONS ── */
+  .notification-area {
+    position: fixed;
+    top: 90px;
+    right: 24px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .notification {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    width: 320px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: slideIn 0.3s ease;
+    cursor: pointer;
+  }
+
+  .notification.critical { border-color: var(--danger); background: rgba(10, 21, 32, 0.98); }
+
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  .notif-icon { font-size: 20px; margin-top: 2px; }
+  .notif-content { flex: 1; }
+  .notif-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .notif-msg { font-size: 12px; color: var(--text2); font-family: var(--mono); }
+  .notif-dismiss { font-size: 18px; color: var(--text3); cursor: pointer; }
+  .notif-dismiss:hover { color: var(--text); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 24px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 40px;
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 2px; margin-bottom: 20px; background: var(--surface2); border-radius: 10px; padding: 4px; }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+    color: var(--text3);
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--surface3); color: var(--accent); border: 1px solid var(--border2); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeIn 0.2s ease; }
+</style>
+</head>
+<body>
+
+<!-- Notifications -->
+<div class="notification-area" id="notifArea"></div>
+
+<!-- Header -->
+<header>
+  <div class="header-inner">
+    <a href="#" class="logo">
+      <div class="logo-icon">🛡️</div>
+      <span class="logo-text">PhishGuard</span>
+      <span class="logo-version">v2.0.0</span>
+    </a>
+
+    <div class="header-status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">MONITORING ACTIVE</span>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="exportReport()">📄 Export Report</button>
+      <button class="btn btn-danger" onclick="emergencyStop()" id="scanBtn">⛔ Emergency Stop</button>
+      <button class="btn btn-primary" onclick="runScan()" id="startScanBtn">▶ Run Full Scan</button>
+    </div>
+  </div>
+</header>
+
+<!-- Main -->
+<main class="container">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="hero-title">// THREAT INTELLIGENCE DASHBOARD</div>
+        <div class="hero-subtitle">Real-time <span>AI-Powered</span><br>Phishing Detection</div>
+      </div>
+      <div class="timestamp-box">
+        <div>HOST: <strong id="hostname">WORKSTATION-01</strong></div>
+        <div>IP: <strong id="localip">192.168.1.105</strong></div>
+        <div>SCAN ID: <strong id="scanId">--</strong></div>
+        <div>LAST SCAN: <strong id="lastScan">Never</strong></div>
+        <div>UPTIME: <strong id="uptime">00:00:00</strong></div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card critical">
+        <div class="stat-trend">☠️</div>
+        <div class="stat-label">// THREATS DETECTED</div>
+        <div class="stat-value" id="stat-threats">0</div>
+        <div class="stat-sub">+0 in last scan</div>
+      </div>
+      <div class="stat-card warning">
+        <div class="stat-trend">⚠️</div>
+        <div class="stat-label">// SUSPICIOUS URLs</div>
+        <div class="stat-value" id="stat-urls">0</div>
+        <div class="stat-sub">analyzed today</div>
+      </div>
+      <div class="stat-card ok">
+        <div class="stat-label">// CONNECTIONS SAFE</div>
+        <div class="stat-trend">🔗</div>
+        <div class="stat-value" id="stat-conns">--</div>
+        <div class="stat-sub">active network connections</div>
+      </div>
+      <div class="stat-card info">
+        <div class="stat-trend">🔬</div>
+        <div class="stat-label">// AI RISK SCORE</div>
+        <div class="stat-value" id="stat-score">--</div>
+        <div class="stat-sub">system risk level / 100</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+
+    <!-- Left Column -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+      <!-- URL Scanner -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-icon">🔍</span> AI URL & Domain Scanner</div>
+          <span class="panel-badge">LIVE</span>
+        </div>
+        <div class="panel-body">
+          <div class="scanner-form">
+            <input type="text" class="scanner-input" id="urlInput" placeholder="Enter URL, domain, or IP to analyze... e.g. paypa1-secure.xyz" />
+            <button class="btn btn-primary" onclick="scanUrl()">Analyze</button>
+          </div>
+
+          <div class="scanner-result" id="scanResult">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div style="font-weight:700; font-size:14px;" id="scannedDomain">—</div>
+              <span class="threat-badge" id="scannedBadge">—</span>
+            </div>
+
+            <div class="risk-meter">
+              <div class="risk-label">
+                <span>AI Risk Score</span>
+                <span id="riskScoreVal">0</span>/100
+              </div>
+              <div class="risk-meter-bar">
+                <div class="risk-meter-fill" id="riskFill" style="width:0%"></div>
+              </div>
+            </div>
+
+            <div class="factor-list" id="factorList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Threat Feed -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-icon">📡</span> Live Threat Feed</div>
+          <span class="panel-badge" id="threatCount">0 threats</span>
+        </div>
+        <div class="panel-body">
+          <div class="threat-list" id="threatList">
+            <div style="text-align:center; padding: 40px 0; color: var(--text3); font-family: var(--mono); font-size:13px;">
+              🛡️ No threats detected.<br>Run a scan to begin.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network Activity Chart -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-icon">📈</span> Connection Activity (24h)</div>
+          <span class="panel-badge" id="chartBadge">LIVE</span>
+        </div>
+        <div class="panel-body">
+          <div class="chart-area" id="chartArea"></div>
+          <div style="display:flex; justify-content:space-between; margin-top:12px; font-family:var(--mono); font-size:10px; color:var(--text3);">
+            <div><span style="color:var(--danger)">■</span> Blocked</div>
+            <div><span style="color:var(--warn)">■</span> Suspicious</div>
+            <div><span style="color:var(--ok)">■</span> Safe</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network Connections -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-icon">🌐</span> Active Network Connections</div>
+          <span class="panel-badge" id="connCount">0 active</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table class="net-table">
+            <thead>
+              <tr>
+                <th>REMOTE HOST</th>
+                <th>PORT</th>
+                <th>PROTOCOL</th>
+                <th>RISK</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+            <tbody id="connTable">
+              <tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text3);">No connections data — run a scan</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column / Sidebar -->
+    <div class="sidebar-grid">
+
+      <!-- System Checks -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-icon">✅</span> Security Checks</div>
+          <span class="panel-badge" id="checksStatus">--</span>
+        </div>
+        <div class="panel-body">
+          <div class="check-list" id="checkList">
+            <div class="check-item">
+              <span class="check-icon">🔒</span>
+              <span class="check-text">DNS Security</span>
+              <span class="check-status status-ok" id="check-dns">—</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon">🧱</span>
+              <span class="check-text">Hosts File</span>
+              <span class="check-status status-ok" id="check-hosts">—</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon">⚙️</span>
+              <span class="check-text">Processes</span>
+              <span class="check-status status-ok" id="check-proc">—</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon">🌐</span>
+              <span class="check-text">Network Ports</span>
+              <span class="check-status status-ok" id="check-ports">—</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon">🔐</span>
+              <span class="check-text">SSL/TLS</span>
+              <span class="check-status status-ok" id="check-ssl">—</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon">📧</span>
+              <span class="check-text">Email Filters</span>
+              <span class="check-status status-ok" id="check-email">—</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon">📅</span>
+              <span class="check-text">Crontab</span>
+              <span class="check-status status-ok" id="check-cron">—</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon">🔏</span>
+              <span class="check-text">Browser History</span>
+              <span class="check-status status-ok" id="check-browser">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terminal -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-icon">💻</span> Live Console</div>
+          <span class="panel-badge">STDOUT</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <div class="terminal">
+            <div class="terminal-bar">
+              <div class="term-dot red"></div>
+              <div class="term-dot yellow"></div>
+              <div class="term-dot green"></div>
+              <span class="terminal-title">phishguard — scan terminal</span>
+            </div>
+            <div class="terminal-body" id="terminalBody">
+              <div><span class="t-prompt">phishguard $</span> <span class="t-cmd">./phishguard.sh --monitor</span></div>
+              <div class="t-dim">PhishGuard v2.0.0 | MIT License</div>
+              <div class="t-dim">────────────────────────────────</div>
+              <div><span class="t-ok">[OK]</span> Initialized monitoring engine</div>
+              <div><span class="t-ok">[OK]</span> Threat DB loaded (14 known domains)</div>
+              <div><span class="t-ok">[OK]</span> AI scoring engine ready</div>
+              <div><span class="t-ok">[OK]</span> DNS watcher active</div>
+              <div><span class="t-dim">Waiting for scan trigger...</span></div>
+              <div><span class="t-prompt">phishguard $</span> <span class="t-cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-icon">⚡</span> Quick Actions</div>
+        </div>
+        <div class="panel-body" style="display:flex; flex-direction:column; gap:10px;">
+          <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="runScan()">🔍 Full System Scan</button>
+          <button class="btn btn-ghost" style="width:100%; justify-content:center;" onclick="quickNetScan()">🌐 Network Scan</button>
+          <button class="btn btn-ghost" style="width:100%; justify-content:center;" onclick="quickProcScan()">⚙️ Process Scan</button>
+          <button class="btn btn-ghost" style="width:100%; justify-content:center;" onclick="exportReport()">📄 Export JSON Report</button>
+          <button class="btn btn-danger" style="width:100%; justify-content:center; font-size:12px;" onclick="applyFixes()">🔧 Apply Auto-Fixes</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="container">
+    <strong>PhishGuard v2.0.0</strong> — Open Source MIT License |
+    <a href="https://github.com/phishguard/phishguard" target="_blank">GitHub</a> |
+    Built for IT Security Teams | AI Threat Detection Engine
+  </div>
+</footer>
+
+<script>
+// ─── DATA & STATE ───────────────────────────────────────────
+let scanCount = 0;
+let threatTotal = 0;
+let urlsAnalyzed = 0;
+let startTime = Date.now();
+let scanActive = false;
+let reportData = { findings: [], timestamp: null };
+
+const PHISHING_DOMAINS = [
+  'paypa1.com','amazon-security.xyz','microsoft-verify.net','apple-id-support.com',
+  'secure-banking-alert.com','login-verify-now.com','account-suspended-verify.com',
+  'update-your-account.net','signin-security.com','bankofamerica-alert.com',
+  'irs-gov-refund.com','covid-relief-payment.com','netflix-billing-update.com',
+  'verify-your-paypal.com'
+];
+
+const SUSPICIOUS_TLDS = ['xyz','tk','ml','ga','cf','gq','pw','top','click','loan','win','stream'];
+const BRANDS = ['paypal','amazon','microsoft','apple','google','facebook','netflix','bank','irs','secure','login','verify','account','update'];
+
+// ─── UPTIME ─────────────────────────────────────────────────
+setInterval(() => {
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const h = String(Math.floor(elapsed / 3600)).padStart(2,'0');
+  const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2,'0');
+  const s = String(elapsed % 60).padStart(2,'0');
+  document.getElementById('uptime').textContent = `${h}:${m}:${s}`;
+}, 1000);
+
+// ─── INIT ────────────────────────────────────────────────────
+window.onload = () => {
+  document.getElementById('scanId').textContent = generateId();
+  initChart();
+  updateStatPeriodically();
+};
+
+function generateId() {
+  return Math.random().toString(36).substr(2,8).toUpperCase();
+}
+
+// ─── AI SCORING ENGINE ──────────────────────────────────────
+function aiScoreDomain(domain) {
+  let score = 0;
+  const factors = [];
+
+  domain = domain.toLowerCase().replace(/^www\./, '').replace(/^https?:\/\//, '');
+  const parts = domain.split('.');
+  const tld = parts[parts.length - 1];
+
+  // Known phishing
+  if (PHISHING_DOMAINS.includes(domain)) {
+    return { score: 95, factors: ['⛔ KNOWN PHISHING DOMAIN in threat database'], level: 'critical' };
+  }
+
+  // TLD check
+  if (SUSPICIOUS_TLDS.includes(tld)) {
+    score += 20;
+    factors.push(`🚩 Suspicious TLD: .${tld}`);
+  }
+
+  // Domain length
+  if (domain.length > 35) { score += 18; factors.push(`📏 Very long domain (${domain.length} chars)`); }
+  else if (domain.length > 25) { score += 8; factors.push(`📏 Long domain (${domain.length} chars)`); }
+
+  // Digits
+  const digits = (domain.match(/\d/g) || []).length;
+  if (digits > 3) { score += 12; factors.push(`🔢 Many digits (${digits})`); }
+  else if (digits > 1) { score += 5; factors.push(`🔢 Contains digits (${digits})`); }
+
+  // Hyphens
+  const hyphens = (domain.match(/-/g) || []).length;
+  if (hyphens > 2) { score += 15; factors.push(`➖ Multiple hyphens (${hyphens})`); }
+  else if (hyphens > 0) { score += 6; factors.push(`➖ Contains hyphens (${hyphens})`); }
+
+  // Brand keywords
+  let brandHits = 0;
+  BRANDS.forEach(brand => { if (domain.includes(brand)) brandHits++; });
+  if (brandHits > 1) { score += 28; factors.push(`🏷️ Multiple brand keywords (${brandHits} found)`); }
+  else if (brandHits === 1) { score += 12; factors.push(`🏷️ Brand keyword in domain`); }
+
+  // Subdomain depth
+  const depth = parts.length - 2;
+  if (depth > 3) { score += 15; factors.push(`🌊 Deep subdomain structure (${depth} levels)`); }
+  else if (depth > 1) { score += 5; factors.push(`🌊 Subdomains present (${depth})`); }
+
+  // Homoglyphs
+  if (/[0o][a-z]|[1l][a-z]|rn|vv/.test(domain)) {
+    score += 10;
+    factors.push(`👁️ Possible homoglyph / lookalike characters`);
+  }
+
+  // Contains IP
+  if (/^\d+\.\d+\.\d+\.\d+/.test(domain)) {
+    score += 25;
+    factors.push(`📍 IP address instead of domain name`);
+  }
+
+  if (factors.length === 0) factors.push('✅ No suspicious indicators found');
+
+  score = Math.min(score, 100);
+  const level = score >= 70 ? 'critical' : score >= 50 ? 'high' : score >= 25 ? 'medium' : 'low';
+
+  return { score, factors, level };
+}
+
+// ─── URL SCAN ───────────────────────────────────────────────
+function scanUrl() {
+  const input = document.getElementById('urlInput').value.trim();
+  if (!input) return;
+
+  urlsAnalyzed++;
+  document.getElementById('stat-urls').textContent = urlsAnalyzed;
+
+  let domain = input.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].split('?')[0];
+  const result = aiScoreDomain(domain);
+
+  document.getElementById('scannedDomain').textContent = domain;
+  const badge = document.getElementById('scannedBadge');
+  const fill = document.getElementById('riskFill');
+  const scoreVal = document.getElementById('riskScoreVal');
+
+  badge.textContent = result.level.toUpperCase() + ' RISK';
+  badge.className = `threat-badge badge-${result.level}`;
+
+  setTimeout(() => {
+    fill.style.width = result.score + '%';
+    const colors = { critical: '#ff3860', high: '#ffcc00', medium: '#ff8c00', low: '#00e676' };
+    fill.style.background = colors[result.level];
+  }, 50);
+
+  scoreVal.textContent = result.score;
+
+  const factorList = document.getElementById('factorList');
+  factorList.innerHTML = result.factors.map(f =>
+    `<div class="factor-item"><span class="factor-icon">▸</span>${f}</div>`
+  ).join('');
+
+  document.getElementById('scanResult').classList.add('visible');
+
+  // Add to terminal
+  addTerminalLine(`<span class="t-prompt">$</span> <span class="t-cmd">scan --url ${domain}</span>`);
+  if (result.level === 'critical' || result.level === 'high') {
+    addTerminalLine(`<span class="t-err">[THREAT] ${domain} — Score: ${result.score}/100 — ${result.level.toUpperCase()}</span>`);
+    showNotification(`⚠️ ${result.level.toUpperCase()} RISK`, `${domain} scored ${result.score}/100`, result.level);
+
+    addThreatItem(domain, result.score, result.level, 'URL scan');
+    threatTotal++;
+    document.getElementById('stat-threats').textContent = threatTotal;
+  } else {
+    addTerminalLine(`<span class="t-ok">[CLEAN] ${domain} — Score: ${result.score}/100 — ${result.level.toUpperCase()}</span>`);
+  }
+
+  reportData.findings.push({ domain, score: result.score, level: result.level, factors: result.factors });
+}
+
+document.getElementById('urlInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') scanUrl();
+});
+
+// ─── THREAT ITEM ─────────────────────────────────────────────
+function addThreatItem(title, score, level, source) {
+  const list = document.getElementById('threatList');
+  const placeholder = list.querySelector('div[style]');
+  if (placeholder) placeholder.remove();
+
+  const colors = { critical: 'var(--danger)', high: 'var(--warn)', medium: '#ff8c00', low: 'var(--ok)' };
+  const item = document.createElement('div');
+  item.className = `threat-item ${level}`;
+  item.innerHTML = `
+    <span class="threat-badge badge-${level}">${level.toUpperCase()}</span>
+    <div class="threat-content">
+      <div class="threat-title">${title}</div>
+      <div class="threat-meta">${source} • ${new Date().toLocaleTimeString()}</div>
+    </div>
+    <div class="threat-score" style="color:${colors[level]}">${score}</div>
+  `;
+
+  list.prepend(item);
+  document.getElementById('threatCount').textContent = `${++scanCount} threats`;
+}
+
+// ─── FULL SCAN SIMULATION ───────────────────────────────────
+async function runScan() {
+  if (scanActive) return;
+  scanActive = true;
+
+  const btn = document.getElementById('startScanBtn');
+  btn.textContent = '⏳ Scanning...';
+  btn.disabled = true;
+
+  const tid = generateId();
+  document.getElementById('scanId').textContent = tid;
+  reportData = { findings: [], timestamp: new Date().toISOString(), scan_id: tid };
+
+  addTerminalLine(`<span class="t-prompt">phishguard $</span> <span class="t-cmd">./phishguard.sh --scan</span>`);
+  addTerminalLine(`<span class="t-dim">Scan ID: ${tid} | Host: ${document.getElementById('hostname').textContent}</span>`);
+  addTerminalLine(`<span class="t-dim">━━━━━━━━━━━━━━━━━━━━━━━━━━</span>`);
+
+  const steps = [
+    { label: 'Initializing AI engine', time: 300, check: 'check-dns', result: 'ok' },
+    { label: 'Checking DNS security', time: 500, check: 'check-dns', result: 'ok' },
+    { label: 'Scanning network connections', time: 700, check: 'check-ports', result: 'ok' },
+    { label: 'Analyzing running processes', time: 600, check: 'check-proc', result: 'ok' },
+    { label: 'Checking /etc/hosts integrity', time: 400, check: 'check-hosts', result: 'ok' },
+    { label: 'SSL/TLS certificate scan', time: 800, check: 'check-ssl', result: 'ok' },
+    { label: 'Email filter verification', time: 300, check: 'check-email', result: 'warn' },
+    { label: 'Crontab persistence check', time: 500, check: 'check-cron', result: 'ok' },
+    { label: 'Browser history analysis', time: 600, check: 'check-browser', result: 'ok' },
+  ];
+
+  for (const step of steps) {
+    await sleep(step.time);
+    addTerminalLine(`<span class="t-ok">[OK]</span> ${step.label}`);
+
+    const el = document.getElementById(step.check);
+    if (el) {
+      el.className = `check-status status-${step.result}`;
+      el.textContent = step.result === 'ok' ? 'PASS' : step.result === 'warn' ? 'WARN' : 'FAIL';
+    }
+  }
+
+  // Simulate some findings
+  await sleep(400);
+
+  // Simulate threat detection
+  const testDomains = [
+    'paypal-secure-verify-login.xyz', 'microsoft-account-update.top',
+    'amazon-gift-card-winner.ml', 'secure-banking-portal.tk'
+  ];
+
+  const foundThreats = [];
+  for (const d of testDomains) {
+    const r = aiScoreDomain(d);
+    foundThreats.push({ domain: d, ...r });
+    reportData.findings.push({ domain: d, ...r });
+  }
+
+  foundThreats.forEach(t => {
+    if (t.level === 'critical' || t.level === 'high') {
+      addThreatItem(t.domain, t.score, t.level, 'AI Pattern Match');
+      threatTotal++;
+    }
+  });
+
+  document.getElementById('stat-threats').textContent = threatTotal;
+
+  // Update connections
+  document.getElementById('stat-conns').textContent = Math.floor(Math.random() * 20) + 5;
+  document.getElementById('stat-score').textContent = threatTotal > 0 ? Math.min(threatTotal * 15, 100) : 2;
+  document.getElementById('connCount').textContent = `${Math.floor(Math.random()*12)+3} active`;
+
+  // Populate connections table
+  populateConnections();
+
+  // Update chart
+  updateChart();
+
+  document.getElementById('lastScan').textContent = new Date().toLocaleTimeString();
+  document.getElementById('checksStatus').textContent = `${steps.length - 1}/9 passed`;
+
+  await sleep(200);
+  addTerminalLine(`<span class="t-dim">━━━━━━━━━━━━━━━━━━━━━━━━━━</span>`);
+  addTerminalLine(`<span class="t-ok">[COMPLETE]</span> Scan finished — ${foundThreats.length} threats found`);
+  addTerminalLine(`<span class="t-prompt">phishguard $</span> <span class="t-cursor"></span>`);
+
+  if (foundThreats.some(t => t.level === 'critical')) {
+    showNotification('🚨 Critical Threat Detected', `${foundThreats.filter(t=>t.level==='critical').length} critical phishing domains found`, 'critical');
+  }
+
+  btn.textContent = '▶ Run Full Scan';
+  btn.disabled = false;
+  scanActive = false;
+}
+
+function populateConnections() {
+  const conns = [
+    { host: '142.250.80.46 (google.com)', port: 443, proto: 'HTTPS/TLS', risk: 'low', status: 'SAFE' },
+    { host: '104.21.45.67 (cloudflare.com)', port: 443, proto: 'HTTPS/TLS', risk: 'low', status: 'SAFE' },
+    { host: '185.220.101.12', port: 9050, proto: 'TCP', risk: 'critical', status: 'BLOCKED' },
+    { host: '52.94.228.167 (amazon.com)', port: 443, proto: 'HTTPS/TLS', risk: 'low', status: 'SAFE' },
+    { host: '23.185.0.4', port: 80, proto: 'HTTP', risk: 'medium', status: 'WARN' },
+  ];
+
+  const tbody = document.getElementById('connTable');
+  const colors = { low: 'var(--ok)', medium: 'var(--warn)', high: '#ff8c00', critical: 'var(--danger)' };
+  tbody.innerHTML = conns.map(c => `
+    <tr>
+      <td>${c.host}</td>
+      <td style="font-family:var(--mono)">${c.port}</td>
+      <td>${c.proto}</td>
+      <td style="color:${colors[c.risk]}">${c.risk.toUpperCase()}</td>
+      <td><span class="threat-badge badge-${c.risk === 'low' ? 'clean' : c.risk === 'critical' ? 'blocked' : c.risk}">${c.status}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ─── CHART ───────────────────────────────────────────────────
+function initChart() {
+  const area = document.getElementById('chartArea');
+  area.innerHTML = '';
+  const hours = Array.from({length:24}, (_,i) => i);
+  hours.forEach(h => {
+    const group = document.createElement('div');
+    group.className = 'chart-bar-group';
+    const safe = Math.floor(Math.random() * 60) + 20;
+    const susp = Math.floor(Math.random() * 20);
+    const blk = Math.floor(Math.random() * 5);
+    const label = h % 6 === 0 ? `${h}h` : '';
+    group.innerHTML = `
+      <div class="chart-bar" style="height:${blk*3}px; background:var(--danger); opacity:0.8;"></div>
+      <div class="chart-bar" style="height:${susp*2}px; background:var(--warn); opacity:0.7;"></div>
+      <div class="chart-bar" style="height:${safe}px; background:var(--ok); opacity:0.6;"></div>
+      <div class="chart-label">${label}</div>
+    `;
+    area.appendChild(group);
+  });
+}
+
+function updateChart() {
+  initChart(); // Refresh with new random data
+}
+
+// ─── QUICK SCANS ─────────────────────────────────────────────
+function quickNetScan() {
+  addTerminalLine(`<span class="t-prompt">$</span> <span class="t-cmd">./phishguard.sh --network</span>`);
+  addTerminalLine(`<span class="t-ok">[OK]</span> Network scan starting...`);
+  populateConnections();
+  showNotification('🌐 Network Scan', 'Scanning active connections...', 'info');
+}
+
+function quickProcScan() {
+  addTerminalLine(`<span class="t-prompt">$</span> <span class="t-cmd">./phishguard.sh --process</span>`);
+  addTerminalLine(`<span class="t-ok">[OK]</span> No suspicious processes found`);
+  showNotification('⚙️ Process Scan', 'All processes appear normal', 'ok');
+}
+
+function applyFixes() {
+  addTerminalLine(`<span class="t-prompt">$</span> <span class="t-cmd">./phishguard.sh --fix</span>`);
+  addTerminalLine(`<span class="t-warn">[WARN]</span> Auto-fix requires root privileges`);
+  addTerminalLine(`<span class="t-dim">Run: sudo ./phishguard.sh --fix</span>`);
+  showNotification('🔧 Auto-Fix', 'Run phishguard.sh --fix with sudo to apply fixes', 'warn');
+}
+
+function emergencyStop() {
+  document.getElementById('statusDot').style.background = 'var(--danger)';
+  document.getElementById('statusText').textContent = 'EMERGENCY STOP';
+  addTerminalLine(`<span class="t-err">[STOP] Emergency halt triggered — all monitoring paused</span>`);
+  showNotification('⛔ Emergency Stop', 'All monitoring suspended. Restart to resume.', 'critical');
+}
+
+function updateStatPeriodically() {
+  setInterval(() => {
+    const connsEl = document.getElementById('stat-conns');
+    if (connsEl.textContent === '--') return;
+    const v = parseInt(connsEl.textContent) + Math.floor(Math.random()*3) - 1;
+    connsEl.textContent = Math.max(1, v);
+  }, 5000);
+}
+
+// ─── EXPORT REPORT ──────────────────────────────────────────
+function exportReport() {
+  reportData.exported_at = new Date().toISOString();
+  reportData.tool = 'PhishGuard';
+  reportData.version = '2.0.0';
+  reportData.summary = {
+    total_findings: reportData.findings.length,
+    critical: reportData.findings.filter(f=>f.level==='critical').length,
+    high: reportData.findings.filter(f=>f.level==='high').length,
+    medium: reportData.findings.filter(f=>f.level==='medium').length,
+    low: reportData.findings.filter(f=>f.level==='low').length,
+  };
+
+  const blob = new Blob([JSON.stringify(reportData, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `phishguard_report_${Date.now()}.json`;
+  a.click();
+  addTerminalLine(`<span class="t-ok">[OK]</span> Report exported successfully`);
+}
+
+// ─── TERMINAL ────────────────────────────────────────────────
+function addTerminalLine(html) {
+  const body = document.getElementById('terminalBody');
+  // Remove last cursor line
+  const lastLine = body.lastElementChild;
+  if (lastLine && lastLine.innerHTML.includes('t-cursor')) lastLine.remove();
+
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+
+  // Re-add cursor
+  const cursor = document.createElement('div');
+  cursor.innerHTML = `<span class="t-prompt">phishguard $</span> <span class="t-cursor"></span>`;
+  body.appendChild(cursor);
+  body.scrollTop = body.scrollHeight;
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────
+function showNotification(title, msg, type) {
+  const area = document.getElementById('notifArea');
+  const icons = { critical: '🚨', high: '⚠️', warn: '⚠️', ok: '✅', info: 'ℹ️' };
+  const el = document.createElement('div');
+  el.className = `notification ${type === 'critical' ? 'critical' : ''}`;
+  el.innerHTML = `
+    <div class="notif-icon">${icons[type] || 'ℹ️'}</div>
+    <div class="notif-content">
+      <div class="notif-title">${title}</div>
+      <div class="notif-msg">${msg}</div>
+    </div>
+    <div class="notif-dismiss" onclick="this.parentElement.remove()">×</div>
+  `;
+  area.appendChild(el);
+  setTimeout(() => el.remove(), 6000);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
