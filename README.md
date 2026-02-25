@@ -1,4 +1,4 @@
-# 🛡️ PhishGuard v2.0 — AI-Powered Anti-Phishing & Threat Detection
+# 🛡️ PhishGuard v1.0 — AI-Powered Anti-Phishing & Threat Detection
 
 > **Open Source | MIT License | Enterprise-Grade | Real-time Protection**
 
@@ -27,7 +27,7 @@ PhishGuard/
 
 ```bash
 # Clone / setup
-git clone https://github.com/your-org/phishguard
+git clone https://github.com/aryantomar898-gif/phishguard
 cd PhishGuard
 chmod +x phishguard.sh
 
